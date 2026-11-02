@@ -1,0 +1,39 @@
+## Visual Studio & Rider
+.vs/
+.idea/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.sln.docstates
+*.DotSettings.user
+*.slnx
+
+## Build outputs
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+[Rr]elease
+
+## OS & Temp Files
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+temp/
+audio_cache/
+
+## Native / Package caches
+*.apk
+*.aab
+!release/*.apk
+!release/*.zip
+packages/
+*.nupkg
+
+## Downloaded third-party binaries
+tools/yt-dlp.exe
+tools/ffmpeg.exe
+tools/ffprobe.exe

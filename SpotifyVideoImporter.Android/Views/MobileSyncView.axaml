@@ -1,0 +1,404 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SpotifyVideoImporter.Android.ViewModels"
+             xmlns:models="using:SpotifyVideoImporter.Core.Models"
+             xmlns:services="using:SpotifyVideoImporter.Android.Services"
+             xmlns:controls="using:SpotifyVideoImporter.Android.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="800"
+             x:Class="SpotifyVideoImporter.Android.Views.MobileSyncView"
+             x:DataType="vm:MobileSyncViewModel"
+             Background="#121212">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="#E0E0E0" />
+            <Setter Property="FontFamily" Value="Inter, Roboto, sans-serif" />
+        </Style>
+
+        <Style Selector="Button.spotify-primary">
+            <Setter Property="Background" Value="#1DB954" />
+            <Setter Property="Foreground" Value="#000000" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="CornerRadius" Value="24" />
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.spotify-primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1ED760" />
+        </Style>
+
+        <Style Selector="Button.spotify-secondary">
+            <Setter Property="Background" Value="#252525" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.spotify-secondary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#333333" />
+        </Style>
+
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#222222" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#383838" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="12,9" />
+        </Style>
+
+        <Style Selector="TabControl">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="TabItem">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#9E9E9E" />
+            <Setter Property="Background" Value="#1C1C1C" />
+            <Setter Property="CornerRadius" Value="20" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="Margin" Value="4,0" />
+        </Style>
+        <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="#000000" />
+            <Setter Property="Background" Value="#1DB954" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto, Auto, *">
+        <!-- TOP APP HEADER -->
+        <Border Grid.Row="0" Background="#181818" Padding="16,12" BorderBrush="#252525" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto, *, Auto">
+                <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16" Background="#1DB954" Margin="0,0,10,0">
+                    <TextBlock Text="▶" Foreground="#000000" FontSize="13" FontWeight="Bold" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                </Border>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="SpotiSync" FontSize="17" FontWeight="Bold" Foreground="#FFFFFF"/>
+                    <TextBlock Text="Локальные треки &amp; Wi-Fi синхронизация" FontSize="11" Foreground="#888888"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- STORAGE PERMISSION BANNER (Visible if permission not yet granted) -->
+        <Border Grid.Row="1" Background="#281B08" BorderBrush="#FFC83B" BorderThickness="1" 
+                CornerRadius="12" Margin="12,8,12,2" Padding="12,10"
+                IsVisible="{Binding !HasStoragePermission}">
+            <Grid ColumnDefinitions="*, Auto">
+                <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Text="⚠️ Требуется доступ к файлам" FontWeight="Bold" FontSize="12" Foreground="#FFC83B"/>
+                    <TextBlock Text="Для сохранения треков в общую папку Music/Spotify включите доступ к файлам." 
+                               FontSize="10" Foreground="#DDDDDD" TextWrapping="Wrap"/>
+                </StackPanel>
+                <Button Grid.Column="1" Classes="spotify-primary" Content="Разрешить" VerticalAlignment="Center"
+                        Command="{Binding RequestStoragePermissionCommand}" Margin="8,0,0,0"/>
+            </Grid>
+        </Border>
+
+        <!-- MAIN TABS -->
+        <TabControl Grid.Row="2" SelectedIndex="{Binding SelectedTabIndex}" Margin="8,4">
+
+            <!-- ============================================== -->
+            <!-- TAB 1: 🎵 YOUTUBE DOWNLOAD & VEGAS TIMELINE     -->
+            <!-- ============================================== -->
+            <TabItem Header="🎵 Редактор трека">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="12" Margin="4,8,4,20">
+
+                        <!-- SEARCH BOX -->
+                        <Border Background="#1C1C1C" CornerRadius="14" Padding="14">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Поиск на YouTube или прямая ссылка:" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                <Grid ColumnDefinitions="*, Auto">
+                                    <TextBox Grid.Column="0" Text="{Binding SearchQuery}" 
+                                             PlaceholderText="Название трека или https://youtu.be/..." Margin="0,0,8,0"/>
+                                    <Button Grid.Column="1" Classes="spotify-primary" Content="Найти" 
+                                             Command="{Binding SearchYouTubeCommand}"/>
+                                </Grid>
+                                <ProgressBar Value="{Binding EditorProgress}" Maximum="100" Height="4" CornerRadius="2"
+                                             IsVisible="{Binding IsEditorBusy}" Foreground="#1DB954" Margin="0,4,0,0"/>
+                                <TextBlock Text="{Binding EditorStatusMessage}" FontSize="11" Foreground="#888888" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- SEARCH RESULTS LIST (Visible when searching) -->
+                        <Border Background="#1A1A1A" CornerRadius="14" Padding="12" IsVisible="{Binding IsSearching}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Результаты поиска (нажмите для загрузки):" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                <ListBox ItemsSource="{Binding SearchResults}" MaxHeight="240" Background="Transparent">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="services:YouTubeVideoResult">
+                                            <Button Classes="spotify-secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                                    Command="{Binding ((vm:MobileSyncViewModel)DataContext).LoadVideoCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                    CommandParameter="{Binding}" Margin="0,2" Padding="10,8">
+                                                <Grid ColumnDefinitions="Auto, *, Auto">
+                                                    <Border Grid.Column="0" Width="28" Height="28" CornerRadius="6" Background="#2E2E2E" Margin="0,0,10,0">
+                                                        <TextBlock Text="🎵" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" Spacing="2">
+                                                        <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="12" TextTrimming="CharacterEllipsis" Foreground="#FFFFFF"/>
+                                                        <TextBlock Text="{Binding Author}" FontSize="10" Foreground="#888888"/>
+                                                    </StackPanel>
+                                                    <Border Grid.Column="2" Background="#142618" CornerRadius="6" Padding="6,3" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding DurationFormatted}" FontSize="11" Foreground="#1DB954" FontWeight="SemiBold"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- VEGAS TIMELINE & PLAYER CARD (Visible when audio loaded) -->
+                        <Border Background="#1C1C1C" CornerRadius="14" Padding="14" IsVisible="{Binding HasAudioLoaded}">
+                            <StackPanel Spacing="12">
+                                <Grid ColumnDefinitions="*, Auto">
+                                    <TextBlock Grid.Column="0" Text="🎬 Студийный таймлайн (Sony Vegas Pro)" FontWeight="Bold" FontSize="13" Foreground="#1DB954"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding AudioDuration, StringFormat='Длина: {0:F1} с'}" FontSize="11" Foreground="#888888"/>
+                                </Grid>
+
+                                <!-- TIMECODE LCD DISPLAY -->
+                                <Border Background="#0C0C0C" BorderBrush="#252525" BorderThickness="1" CornerRadius="8" Padding="12,6">
+                                    <Grid ColumnDefinitions="*, *, *">
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="[ Метка IN" FontSize="9" Foreground="#888888"/>
+                                            <TextBlock Text="{Binding TrimStart, StringFormat='{}{0:F1} c'}" FontWeight="Bold" FontSize="13" Foreground="#FFC83B"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                            <TextBlock Text="▶ Позиция" FontSize="9" Foreground="#888888" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="{Binding CurrentPosition, StringFormat='{}{0:F1} c'}" FontWeight="Bold" FontSize="14" Foreground="#1DB954" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                                            <TextBlock Text="Метка OUT ]" FontSize="9" Foreground="#888888" HorizontalAlignment="Right"/>
+                                            <TextBlock Text="{Binding TrimEnd, StringFormat='{}{0:F1} c'}" FontWeight="Bold" FontSize="13" Foreground="#FFC83B" HorizontalAlignment="Right"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- CUSTOM VEGAS TIMELINE CONTROL -->
+                                <Border Background="#121212" BorderBrush="#2C2C2C" BorderThickness="1" CornerRadius="8" Height="105" ClipToBounds="True">
+                                    <controls:VegasTimelineControl x:Name="TimelineControl"
+                                                                   Duration="{Binding AudioDuration}"
+                                                                   Position="{Binding CurrentPosition, Mode=TwoWay}"
+                                                                   TrimStart="{Binding TrimStart, Mode=TwoWay}"
+                                                                   TrimEnd="{Binding TrimEnd, Mode=TwoWay}"/>
+                                </Border>
+
+                                <!-- PLAYBACK CONTROLS -->
+                                <Grid ColumnDefinitions="Auto, *">
+                                    <Button Grid.Column="0" Classes="spotify-secondary" Content="⏮ В начало" Command="{Binding SeekToStartCommand}"/>
+                                    <Button Grid.Column="1" Classes="spotify-primary" Margin="10,0,0,0" HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Center" Command="{Binding TogglePlayCommand}">
+                                        <TextBlock Text="{Binding IsPlaying, Converter={x:Null}, StringFormat='▶ Воспроизвести выборку'}"
+                                                   FontWeight="Bold"/>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- METADATA & COVER ART CARD (Visible when audio loaded) -->
+                        <Border Background="#1C1C1C" CornerRadius="14" Padding="14" IsVisible="{Binding HasAudioLoaded}">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="🏷 Метаданные и обложка трека" FontWeight="Bold" FontSize="14" Foreground="#FFFFFF"/>
+                                
+                                <!-- COVER ART SECTION -->
+                                <Grid ColumnDefinitions="115, *" Margin="0,4,0,8">
+                                    <!-- COVER PREVIEW -->
+                                    <Border Grid.Column="0" Width="105" Height="105" CornerRadius="10" 
+                                            Background="#141414" BorderBrush="#333333" BorderThickness="1" 
+                                            ClipToBounds="True" HorizontalAlignment="Left">
+                                        <Grid>
+                                            <!-- Fallback placeholder when no cover -->
+                                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="4"
+                                                        IsVisible="{Binding CoverImage, Converter={x:Static ObjectConverters.IsNull}}">
+                                                <TextBlock Text="🎵" FontSize="30" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="Нет обложки" FontSize="9" Foreground="#666666" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                            <!-- Actual cover image -->
+                                            <Image Source="{Binding CoverImage}" Stretch="UniformToFill"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- COVER BUTTONS -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
+                                        <Button Classes="spotify-primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                                Command="{Binding PickCustomCoverCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock Text="🖼️" FontSize="13"/>
+                                                <TextBlock Text="Своя обложка" FontWeight="Bold" FontSize="12"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Classes="spotify-secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                                Command="{Binding RemoveCoverCommand}"
+                                                IsVisible="{Binding CoverImage, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                            <TextBlock Text="✕ Удалить обложку" FontSize="11" Foreground="#FF6666"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- TAGS INPUTS -->
+                                <Grid ColumnDefinitions="Auto, *" Margin="0,2">
+                                    <TextBlock Grid.Column="0" Text="Название:" Width="75" VerticalAlignment="Center" FontSize="11" Foreground="#888888"/>
+                                    <TextBox Grid.Column="1" Text="{Binding EditorTitle}"/>
+                                </Grid>
+
+                                <Grid ColumnDefinitions="Auto, *" Margin="0,2">
+                                    <TextBlock Grid.Column="0" Text="Артист:" Width="75" VerticalAlignment="Center" FontSize="11" Foreground="#888888"/>
+                                    <TextBox Grid.Column="1" Text="{Binding EditorArtist}"/>
+                                </Grid>
+
+                                <Grid ColumnDefinitions="Auto, *" Margin="0,2">
+                                    <TextBlock Grid.Column="0" Text="Альбом:" Width="75" VerticalAlignment="Center" FontSize="11" Foreground="#888888"/>
+                                    <TextBox Grid.Column="1" Text="{Binding EditorAlbum}"/>
+                                </Grid>
+
+                                <!-- SAVE BUTTON -->
+                                <Button Classes="spotify-primary" HorizontalAlignment="Stretch" 
+                                        HorizontalContentAlignment="Center" Margin="0,8,0,0"
+                                        Padding="16,12"
+                                        Command="{Binding SaveTrimmedToSpotifyCommand}"
+                                        IsEnabled="{Binding !IsEditorBusy}">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <TextBlock Text="💾" FontSize="16"/>
+                                        <TextBlock Text="Обрезать и сохранить в Spotify" FontWeight="Bold" FontSize="13"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ============================================== -->
+            <!-- TAB 2: 📲 SYNC WITH PC                          -->
+            <!-- ============================================== -->
+            <TabItem Header="📲 Синхронизация">
+                <Grid RowDefinitions="Auto, *, Auto" Margin="4,8">
+
+                    <!-- CONNECTION / DISCOVERY CARD -->
+                    <Border Grid.Row="0" Background="#1C1C1C" CornerRadius="14" Padding="14" Margin="0,0,0,10">
+                        <StackPanel Spacing="10">
+                            <!-- NOT CONNECTED -->
+                            <StackPanel Spacing="10" IsVisible="{Binding !IsConnected}">
+                                <TextBlock Text="📲 Подключение к компьютеру" FontWeight="Bold" FontSize="14" Foreground="#FFFFFF"/>
+
+                                <!-- OPEN CAMERA QR SCANNER (PRIMARY ACTION) -->
+                                <Button Classes="spotify-primary" HorizontalAlignment="Stretch" 
+                                        HorizontalContentAlignment="Center"
+                                        Command="{Binding OpenQrScannerCommand}"
+                                        IsEnabled="{Binding !IsBusy}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="📷" FontSize="15"/>
+                                        <TextBlock Text="Сканировать QR-код с экрана ПК" FontWeight="Bold" FontSize="13"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- AUTO DISCOVERY BUTTON -->
+                                <Button Classes="spotify-secondary" HorizontalAlignment="Stretch" 
+                                        HorizontalContentAlignment="Center"
+                                        Command="{Binding AutoDiscoverCommand}"
+                                        IsEnabled="{Binding !IsBusy}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="🔍" FontSize="13"/>
+                                        <TextBlock Text="Авто-поиск ПК в сети Wi-Fi" FontWeight="SemiBold" FontSize="12"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <TextBlock Text="Или введите адрес вручную с экрана ПК:" FontSize="11" Foreground="#888888" Margin="0,2,0,0"/>
+                                <Grid ColumnDefinitions="*, Auto, Auto">
+                                    <TextBox Grid.Column="0" Text="{Binding ManualIpInput}" PlaceholderText="192.168.1.X:5055" Margin="0,0,6,0"/>
+                                    <Button Grid.Column="1" Classes="spotify-secondary" Content="📋 Вставить" Command="{Binding PasteClipboardInputCommand}" Margin="0,0,6,0"/>
+                                    <Button Grid.Column="2" Classes="spotify-secondary" Content="Подключить" Command="{Binding ConnectFromInputCommand}"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- CONNECTED -->
+                            <Grid ColumnDefinitions="*, Auto, Auto" IsVisible="{Binding IsConnected}">
+                                <StackPanel Grid.Column="0" Spacing="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Border Width="8" Height="8" CornerRadius="4" Background="#1DB954" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding ServerName, StringFormat='Подключено: {0}'}" FontWeight="Bold" FontSize="13" Foreground="#FFFFFF"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding ServerUrl}" FontSize="10" Foreground="#888888"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Classes="spotify-secondary" Content="🔄 Обновить" Command="{Binding RefreshTracksCommand}" Margin="0,0,6,0"/>
+                                <Button Grid.Column="2" Classes="spotify-secondary" Content="✕" ToolTip.Tip="Отключиться" Command="{Binding DisconnectCommand}"/>
+                            </Grid>
+
+                            <TextBlock Text="{Binding StatusMessage}" FontSize="11" Foreground="#1DB954" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- TRACKS LIST FROM PC -->
+                    <Border Grid.Row="1" Background="#181818" CornerRadius="14" Padding="12" Margin="0,0,0,10">
+                        <Grid RowDefinitions="Auto, *">
+                            <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="4,0,4,8">
+                                <TextBlock Grid.Column="0" Text="Треки на компьютере" FontWeight="Bold" FontSize="12" Foreground="#FFFFFF"/>
+                                <Border Grid.Column="1" Background="#142618" CornerRadius="10" Padding="8,3">
+                                    <TextBlock Text="{Binding NewTracksCount, StringFormat='Новых: {0}'}" 
+                                               FontWeight="Bold" Foreground="#1DB954" FontSize="11"/>
+                                </Border>
+                            </Grid>
+
+                            <ListBox Grid.Row="1" ItemsSource="{Binding AvailableTracks}" Background="Transparent">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="models:SyncTrackDto">
+                                        <Border Background="#202020" CornerRadius="10" Padding="10" Margin="0,3">
+                                            <Grid ColumnDefinitions="Auto, *, Auto">
+                                                <Border Grid.Column="0" Width="32" Height="32" CornerRadius="8" Background="#2A2A2A" Margin="0,0,10,0">
+                                                    <TextBlock Text="🎵" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="12" TextTrimming="CharacterEllipsis" Foreground="#FFFFFF"/>
+                                                    <TextBlock Text="{Binding Artist}" FontSize="10" Foreground="#999999"/>
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock Text="{Binding FormattedSize}" FontSize="9" Foreground="#666666"/>
+                                                        <TextBlock Text="{Binding FormattedDuration}" FontSize="9" Foreground="#666666"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+
+                                                <Border Grid.Column="2" CornerRadius="8" Padding="8,4" VerticalAlignment="Center" Background="#262626">
+                                                    <TextBlock Text="{Binding StatusText}" FontSize="10" FontWeight="SemiBold" Foreground="#1DB954"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Border>
+
+                    <!-- BOTTOM SYNC BUTTON -->
+                    <Border Grid.Row="2" Background="#1C1C1C" CornerRadius="14" Padding="12">
+                        <StackPanel Spacing="6">
+                            <ProgressBar Value="{Binding SyncProgress}" Maximum="100" Height="4" CornerRadius="2"
+                                         IsVisible="{Binding IsBusy}" Foreground="#1DB954"/>
+                            <Button Classes="spotify-primary" 
+                                    HorizontalAlignment="Stretch" 
+                                    HorizontalContentAlignment="Center"
+                                    Padding="14,12"
+                                    Command="{Binding SyncAllPendingCommand}"
+                                    IsEnabled="{Binding !IsBusy}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="⚡" FontSize="14"/>
+                                    <TextBlock Text="{Binding NewTracksCount, StringFormat='Синхронизировать ({0} новых)'}" 
+                                               FontWeight="Bold" FontSize="13"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+    </Grid>
+</UserControl>
